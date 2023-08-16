@@ -1,0 +1,9 @@
+openai
+chroma
+langchain
+ffmpeg-python
+pydub
+whisper
+dotenv
+chromadb
+assemblyai
