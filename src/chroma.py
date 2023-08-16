@@ -13,8 +13,7 @@ from constants import *
 
 llm = ChatOpenAI(
     model_name="gpt-4",
-    # Prevent creativity
-    temperature=0,
+    temperature=0.9,
 )
 
 class EmbeddingsType(Enum):
@@ -28,7 +27,7 @@ if EMBEDDDING_FUNCTION == EmbeddingsType.OPENSOURCE:
 elif EMBEDDDING_FUNCTION == EmbeddingsType.OPENAI:
     embedding_function = OpenAIEmbeddings()
 
-DEFAULT_CONTEXT_PROMPT = """Use the following pieces of context to answer the question at the end. If you don't know the answer, just say that you don't know, don't try to make up an answer.
+DEFAULT_CONTEXT_PROMPT = """This is a conversation transcript between George Hotz and Eliezer Yudkowsky. Use the following pieces of context to answer the question at the end.
 
 {context}
 
@@ -42,18 +41,16 @@ Vectorize the paper in Chroma vector store using the given embedding function
 def vectorize_transcript_in_chroma(input: str):
     # split it into sentences
     text_splitter = RecursiveCharacterTextSplitter(
-        # Set a really small chunk size, just to show.
-        chunk_size = 1000,
-        chunk_overlap  = 200,
-        length_function = len,
-        add_start_index = True,
+        chunk_size = 2000,
+        chunk_overlap  = 0
     )
     chunks = text_splitter.split_text(input)
 
     docs = []
-    for section in chunks:
+    for speaker_section in chunks:
+        print(speaker_section)
         doc = Document(
-            page_content=section,
+            page_content=speaker_section,
         )
 
         docs.append(doc)
@@ -79,7 +76,7 @@ def query_chroma_by_prompt(question: str):
     docs = query_chroma(question)
 
     # Query your database here
-    chain = load_qa_chain(llm, chain_type="map_reduce", verbose=True)
+    chain = load_qa_chain(llm, chain_type="stuff")
 
     return chain.run(input_documents=docs, question=question)
 
@@ -102,8 +99,8 @@ def query_chroma_by_prompt_with_template(
 
 
 if __name__ == "__main__":
-    # with open("transcript.txt", "r") as f:
-    #     input = f.read()
-    #     vectorize_transcript_in_chroma(input)
+    with open("transcript-filtered.txt", "r") as f:
+        input = f.read()
+        vectorize_transcript_in_chroma(input)
 
-    print(query_chroma_by_prompt("Who is George Hotz?"))
+    print(query_chroma_by_prompt("Tell me 10 facts I need to take away from this debate."))

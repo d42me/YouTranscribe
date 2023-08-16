@@ -1,15 +1,26 @@
 import assemblyai as aai
 
-aai.settings.api_key = "df401489a47b4996aa7fb3e11797b3f5"
+from constants import ASSEMBLY_API_KEY
 
-config = aai.TranscriptionConfig(speaker_labels=True)
+aai.settings.api_key = ASSEMBLY_API_KEY
+
+config = aai.TranscriptionConfig(speaker_labels=True, speakers_expected=3)
 
 transcriber = aai.Transcriber()
 
 transcript = transcriber.transcribe("transcribe.mp3", config=config)
 
-print(transcript)
+# extract all utterances from the response
+utterances = transcript.utterances
+
+transcript = ""
 
 # Store transcript in a file
-with open('./transcript.json', 'w') as f:
-    f.write(transcript)
+for utterance in utterances:
+  speaker = utterance.speaker
+  text = utterance.text
+  speaker_transcript = f"Speaker {speaker}: {text}\n\n"
+  transcript += speaker_transcript
+
+with open("transcript-by-speaker.txt", "w") as f:
+        f.write(transcript)
